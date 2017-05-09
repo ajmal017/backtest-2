@@ -1,0 +1,9 @@
+{
+  "name": "backtest",
+  "version": "0.0.0",
+  "description": "Backtest stock or directional options & futures trading strategies",
+  "main": "index.js",
+  "repository": "https://github.com/dskrenta/backtest.git",
+  "author": "dskrenta <dskrenta@gmail.com>",
+  "license": "MIT"
+}
