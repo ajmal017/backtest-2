@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('fs');
+
 class BacktestException {
   constructor(message) {
     this.message = message;
@@ -30,7 +32,7 @@ class Backtest {
     startDate,
     endDate
   ) {
-    this.dateFile = `${__dirname}/../data/historical-data.json`;
+    this.dataFile = `${__dirname}/../data/historical-data.json`;
     this.capital = capital;
     this.indicators = indicators;
     this.startDate = Backtest.validateDate(startDate);
@@ -41,12 +43,42 @@ class Backtest {
 
   async main() {
     try {
-      const backtestData = this.generateDates();
-      console.log(backtestData);
-      // const baseMarketData = await this.getMarketData();
+      const dates = this.generateDates();
+      const baseMarketData = await this.getMarketData();
+      const backtestData = formatBacktestData(dates, baseMarketData);
     } catch(err) {
       console.error(err);
     }
+  }
+
+  formatBacktestData(dates, marketData) {
+    dates.map(date => {
+      return {
+        date: date,
+        bars: {
+          AAPL: {
+            date: '2000-05-22T04:00:00.000Z',
+            open: 5.1875,
+            high: 5.1875,
+            low: 4.5625,
+            close: 5,
+            volume: 1550800,
+            adjClose: 4.452268,
+            symbol: 'WDC'
+          },
+          WDC: {
+            date: '2000-05-22T04:00:00.000Z',
+            open: 5.1875,
+            high: 5.1875,
+            low: 4.5625,
+            close: 5,
+            volume: 1550800,
+            adjClose: 4.452268,
+            symbol: 'WDC'
+          }
+        }
+      };
+    });
   }
 
   nextDate(date) {
