@@ -44,14 +44,13 @@ class Backtest {
       const backtestData = this.generateDates();
       console.log(backtestData);
       // const baseMarketData = await this.getMarketData();
-      console.log(backtestData);
     } catch(err) {
       console.error(err);
     }
   }
 
   nextDate(date) {
-    return new Date().setDate(date.getDate() + 1);
+    return new Date(date.setDate(date.getDate() + 1));
   }
 
   generateDates() {
