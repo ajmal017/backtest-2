@@ -7,7 +7,6 @@
   "author": "dskrenta <dskrenta@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "moment": "^2.18.1",
     "yahoo-finance": "^0.2.16"
   }
 }

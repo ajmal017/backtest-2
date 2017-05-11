@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const yahooFinance = require('yahoo-finance');
-const moment = require('moment');
 
 /*
   TODO:
