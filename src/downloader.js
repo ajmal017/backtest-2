@@ -41,7 +41,8 @@ async function main() {
   try {
     const bareMarketData = await getHistoricalData();
     const backtestDateShape = formatDataShape(bareMarketData);
-    console.log(backtestDateShape);
+    const adjustedData = adjustHistoricalData(backtestDateShape);
+    console.log(JSON.stringify(adjustedData, null, 2));
   } catch(error) {
     console.error(error);
   }
@@ -71,17 +72,28 @@ function formatDataShape(bareMarketData) {
   });
 }
 
-function adjustHistoricalData (data) {
+function adjustHistoricalData(data) {
   return data.map(item => {
-    const adjRatio = item.adjClose / item.close;
+    const replacement = {};
+
+    for (let symbol in item.symbols) {
+      const reference = item.symbols[symbol];
+      const adjRatio = reference.adjClose / reference.close;
+
+      replacement[symbol] = {
+        date: reference.date,
+        open: (reference.open * adjRatio).toFixed(2),
+        high: (reference.high * adjRatio).toFixed(2),
+        low: (reference.low * adjRatio).toFixed(2),
+        close: (reference.close * adjRatio).toFixed(2),
+        volume: (reference.volume / adjRatio).toFixed(2),
+        symbol: reference.symbol
+      };
+    }
+
     return {
-      open: item.open * adjRatio,
-      high: item.high * adjRatio,
-      low: item.low * adjRatio,
-      close: item.close * adjRatio,
-      volume: item.volume / adjRatio,
       date: item.date,
-      symbol: item.symbol
+      symbols: replacement
     };
   });
 }
