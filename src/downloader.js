@@ -3,14 +3,6 @@
 const fs = require('fs');
 const yahooFinance = require('yahoo-finance');
 
-/*
-  TODO:
-  X reshape data
-  - adjust historical data
-  - save to appropriate json file
-*/
-
-/*
 const SYMBOLS = [
   'AAPL', 'ABX', 'BABA', 'BBRY', 'C', 'CMCSA', 'CSCO',
   'DIS', 'EEM', 'F', 'FB', 'FCX', 'FXI', 'GE', 'GILD',
@@ -25,13 +17,8 @@ const SYMBOLS = [
   'TEVA', 'TGT', 'TXN', 'UAL', 'UVXY', 'V', 'XLB', 'BIDU',
   'COST', 'XLE', 'BUD', 'CVS', 'CVX', 'CELG', 'WDC'
 ];
-*/
 
-// console.log(JSON.stringify(finalData, null, 2));
-
-const SYMBOLS = ['SPY', 'IWM'];
-// const START_DATE = '2000-01-01';
-const START_DATE = '2016-01-01';
+const START_DATE = '2000-01-01';
 const END_DATE = '2017-01-01';
 const FILE = `${__dirname}/../data/data.json`;
 
@@ -42,10 +29,23 @@ async function main() {
     const bareMarketData = await getHistoricalData();
     const backtestDateShape = formatDataShape(bareMarketData);
     const adjustedData = adjustHistoricalData(backtestDateShape);
-    console.log(JSON.stringify(adjustedData, null, 2));
+    await saveDataToFile(adjustedData);
+    console.log(`Data downloaded, file: ${FILE}`);
   } catch(error) {
     console.error(error);
   }
+}
+
+function saveDataToFile(data) {
+  return new Promise((resolve, reject) => {
+    fs.appendFile(FILE, JSON.stringify(data), err => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
 }
 
 function formatDataShape(bareMarketData) {
@@ -78,17 +78,21 @@ function adjustHistoricalData(data) {
 
     for (let symbol in item.symbols) {
       const reference = item.symbols[symbol];
-      const adjRatio = reference.adjClose / reference.close;
+      if (reference) {
+        const adjRatio = reference.adjClose / reference.close;
 
-      replacement[symbol] = {
-        date: reference.date,
-        open: (reference.open * adjRatio).toFixed(2),
-        high: (reference.high * adjRatio).toFixed(2),
-        low: (reference.low * adjRatio).toFixed(2),
-        close: (reference.close * adjRatio).toFixed(2),
-        volume: (reference.volume / adjRatio).toFixed(2),
-        symbol: reference.symbol
-      };
+        replacement[symbol] = {
+          date: reference.date,
+          open: (reference.open * adjRatio).toFixed(2),
+          high: (reference.high * adjRatio).toFixed(2),
+          low: (reference.low * adjRatio).toFixed(2),
+          close: (reference.close * adjRatio).toFixed(2),
+          volume: (reference.volume / adjRatio).toFixed(2),
+          symbol: reference.symbol
+        };
+      } else {
+        replacement[symbol] = item.symbols[symbol];
+      }
     }
 
     return {
