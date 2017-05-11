@@ -5,6 +5,13 @@ const yahooFinance = require('yahoo-finance');
 const moment = require('moment');
 
 /*
+  Downloader Notes:
+  - populate values based date instead of searching for each date
+  - search for starting date in order to populate existing values
+  - generate array of dates given the range without weekends, populate values accordingly
+*/
+
+/*
 const SYMBOLS = [
   'AAPL', 'ABX', 'BABA', 'BBRY', 'C', 'CMCSA', 'CSCO',
   'DIS', 'EEM', 'F', 'FB', 'FCX', 'FXI', 'GE', 'GILD',
@@ -21,6 +28,12 @@ const SYMBOLS = [
 ];
 */
 
+/*
+  array of dates approach
+  combining data
+  loop through objects
+*/
+
 const SYMBOLS = ['SPY', 'IWM'];
 
 // const START_DATE = '2000-01-01';
@@ -33,12 +46,90 @@ main();
 async function main() {
   try {
     const bareMarketData = await getHistoricalData();
-    let formattedData = formatBacktestStyle(bareMarketData);
-    console.log(formattedData);
+
+    const backtestDateShape = formatDataShape(bareMarketData);
+
+    // let formattedData = formatBacktestStyle(bareMarketData);
+    // console.log(formattedData);
+    // let formattedData = formatData(bareMarketData);
+    // console.log(generateDateRange(START_DATE, END_DATE));
+
     // formattedData = adjustHistoricalDate(formattedData);
   } catch(error) {
     console.error(error);
   }
+}
+
+function formatDataShape(bareMarketData) {
+  const startingIndexes = {};
+  const dates = bareMarketData.SPY.map(bar => bar.date);
+
+  for (let symbol of Object.keys(bareMarketData)) {
+    const startingDate = bareMarketData[symbol][0].date;
+    const datesIndex = dates.findIndex(date => date.valueOf() === startingDate.valueOf());
+    startingIndexes[symbol] = datesIndex;
+  }
+
+  const finalData = dates.map((date, index) => {
+    const inputSymbols = {};
+    for (let symbol of Object.keys(startingIndexes)) {
+      if (index >= startingIndexes[symbol]) {
+        inputSymbols[symbol] = bareMarketData[symbol][index];
+      }
+    }
+    return {
+      date: date,
+      symbols: inputSymbols
+    };
+  });
+
+  console.log(JSON.stringify(finalData, null, 2));
+
+  /*
+  Desired result shape:
+  [
+    {
+      date: xxx,
+      symbols: {
+        AAPL: {marketDataObject},
+        SPY: {marketDataObject}
+      }
+    },
+    {
+      date: xxx,
+      symbols: {
+        AAPL: {marketDataObject},
+        SPY: {marketDataObject}
+      }
+    }
+  ]
+  */
+}
+
+function formatData(bareMarketData) {
+  // console.log(Object.keys(bareMarketData));
+  // console.log(bareMarketData.SPY);
+  // grab spy dates
+    // then insert other information into spy dates
+  const dates = bareMarketData.SPY.map(bar => bar.date);
+  console.log(dates);
+  for (let symbol of Object.keys(bareMarketData)) {
+    if (symbol !== 'SPY') {
+      const startDate = bareMarketData[symbol][0].date;
+      /*
+      for (let bar of bareMarketData[symbol]) {
+        // insert data at correct date position (dates will match due to market opem days)
+      }
+      */
+    }
+  }
+  /*
+  for (let symbol of Object.keys(bareMarketData)) {
+    for (let bar of bareMarketData[symbol]) {
+      console.log(bar.date);
+    }
+  }
+  */
 }
 
 function formatBacktestStyle(marketData) {
