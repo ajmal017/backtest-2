@@ -2,6 +2,8 @@
 const fs = require('fs');
 const yahooFinance = require('yahoo-finance');
 
+// Correct pattern for data downloader
+
 const SYMBOLS = [
   'AAPL', 'ABX', 'BABA', 'BBRY', 'C', 'CMCSA', 'CSCO',
   'DIS', 'EEM', 'F', 'FB', 'FCX', 'FXI', 'GE', 'GILD',

@@ -43,10 +43,56 @@ class Backtest {
 
   async main() {
     try {
+      const dates = this.generateDates();
       const baseMarketData = await this.getMarketData();
+      const backtestData = formatBacktestData(dates, baseMarketData);
     } catch(err) {
       console.error(err);
     }
+  }
+
+  formatBacktestData(dates, marketData) {
+    dates.map(date => {
+      return {
+        date: date,
+        bars: {
+          AAPL: {
+            date: '2000-05-22T04:00:00.000Z',
+            open: 5.1875,
+            high: 5.1875,
+            low: 4.5625,
+            close: 5,
+            volume: 1550800,
+            adjClose: 4.452268,
+            symbol: 'WDC'
+          },
+          WDC: {
+            date: '2000-05-22T04:00:00.000Z',
+            open: 5.1875,
+            high: 5.1875,
+            low: 4.5625,
+            close: 5,
+            volume: 1550800,
+            adjClose: 4.452268,
+            symbol: 'WDC'
+          }
+        }
+      };
+    });
+  }
+
+  nextDate(date) {
+    return new Date(date.setDate(date.getDate() + 1));
+  }
+
+  generateDates() {
+    const dates = [];
+    let currentDate = this.startDate;
+    while(currentDate <= this.endDate) {
+      dates.push(currentDate);
+      currentDate = this.nextDate(currentDate);
+    }
+    return dates;
   }
 
   getMarketData() {
