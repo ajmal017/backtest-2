@@ -2,6 +2,8 @@
 
 const fs = require('fs');
 
+const DATA_FILE = `${__dirname}/../data/historical-data.json`;
+
 class BacktestException {
   constructor(message) {
     this.message = message;
@@ -32,7 +34,7 @@ class Backtest {
     startDate,
     endDate
   ) {
-    this.dataFile = `${__dirname}/../data/historical-data.json`;
+    this.dataFile = DATA_FILE;
     this.capital = capital;
     this.indicators = indicators;
     this.startDate = Backtest.validateDate(startDate);
@@ -44,9 +46,30 @@ class Backtest {
   async main() {
     try {
       const baseMarketData = await this.getMarketData();
+      // adjust historical data (baseMarketData)
+      const adjMarketData = this.adjustHistoricalData(baseMarketData);
+      // build talib market data inputs (special shape)
+      // build backtesting shape
     } catch(err) {
       console.error(err);
     }
+  }
+
+  adjustHistoricalData(data) {
+    return Object.keys(data).map(symbol => {
+      return data[symbol].map(bar => {
+        const adjRatio = bar.adjClose / bar.close;
+        return {
+          open: (bar.open * adjRatio).toFixed(2),
+          high: (bar.high * adjRatio).toFixed(2),
+          low: (bar.low * adjRatio).toFixed(2),
+          close: (bar.close * adjRatio).toFixed(2),
+          volume: (bar.volume / adjRatio).toFixed(2),
+          date: bar.date,
+          symbol: bar.symbol
+        };
+      })
+    });
   }
 
   getMarketData() {
