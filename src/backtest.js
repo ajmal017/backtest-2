@@ -49,13 +49,29 @@ class Backtest {
       // adjust historical data (baseMarketData)
       const adjMarketData = this.adjustHistoricalData(baseMarketData);
       // build talib market data inputs (special shape)
+      const taMarketData = await this.buildTaIndicators(adjMarketData);
       // build backtesting shape
-    } catch(err) {
+    } catch (err) {
       console.error(err);
     }
   }
 
-  generatePresets (taInputs) {
+  async buildTaIndicators(data) {
+    try {
+      const result = {};
+      for (let symbol in data) {
+        const taInputs = await this.formatTaInputs(data[symbol]);
+        const presets = this.generatePresets(taInputs);
+        const resultPromises = presets.map(preset => this.talibExecute(preset));
+        const taData = await Promise.all(resultPromises);
+        result[symbol] = taData;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  generatePresets(taInputs) {
     return this.indicators.map(indicator => {
       const def = talib.explain(indicator);
       const returnObj = {
