@@ -55,6 +55,58 @@ class Backtest {
     }
   }
 
+  generatePresets (taInputs) {
+    return this.indicators.map(indicator => {
+      const def = talib.explain(indicator);
+      const returnObj = {
+        name: def.name,
+        startIdx: 0,
+        endIdx: taInputs.close.length - 1,
+        open: taInputs.open,
+        high: taInputs.high,
+        low: taInputs.low,
+        close: taInputs.close,
+        inReal: taInputs.close
+      };
+      for (let input of def.optInputs) {
+        returnObj[input.name] = input.defaultValue;
+      }
+      return returnObj;
+    });
+  }
+
+  formatTaInputs(data) {
+    Object.keys(data).map(symbol => {
+      const result = {
+        open: [],
+        high: [],
+        low: [],
+        close: [],
+        volume: []
+      };
+      for (let bar of data[symbol]) {
+        result.open.push(bar.open);
+        result.high.push(bar.high);
+        result.low.push(bar.low);
+        result.close.push(bar.close);
+        result.volume.push(bar.volume);
+      }
+      return result;
+    });
+  }
+
+  talibExecute(preset) {
+    return new Promise((resolve, reject) => {
+      talib.execute(preset, (result, err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+
   adjustHistoricalData(data) {
     return Object.keys(data).map(symbol => {
       return data[symbol].map(bar => {
