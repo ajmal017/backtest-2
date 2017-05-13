@@ -48,46 +48,68 @@ class Backtest {
     try {
       const marketData = await this.buildMarketData();
     } catch (error) {
-      throw new BacktestException(error);
+      console.error(error);
     }
   }
 
   async buildMarketData() {
-    const baseMarketData = await this.getMarketData();
-    // adjust historical data (baseMarketData)
-    const adjMarketData = this.adjustHistoricalData(baseMarketData);
-    // build talib market data inputs (special shape)
-    const taMarketData = await this.buildTaIndicators(adjMarketData);
-    console.log(taMarketData);
-    // build backtesting shape
+    try {
+      const baseMarketData = await this.getMarketData();
+      // adjust historical data (baseMarketData)
+      const adjMarketData = this.adjustHistoricalData(baseMarketData);
+      // build talib market data inputs (special shape)
+      const taMarketData = await this.buildTaIndicators(adjMarketData);
+      // console.log(taMarketData['AAPL']);
+      // build backtesting shape
+      const backtestData = this.buildBacktestShape(adjMarketData, taMarketData);
+      console.log(JSON.stringify(backtestData.AAPL));
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async buildTaIndicators(data) {
-    const result = {};
-    for (let symbol in data) {
-      const taInputs = await this.formatTaInputs(data[symbol]);
-      const presets = this.generatePresets(taInputs);
-      const resultPromises = presets.map(preset => this.talibExecute(preset));
-      const taData = await Promise.all(resultPromises);
-      result[symbol] = taData;
+    try {
+      const result = {};
+      for (let symbol in data) {
+        const taInputs = await this.formatTaInputs(data[symbol]);
+        const presets = this.generatePresets(taInputs);
+        const resultPromises = presets.map(preset => this.talibExecute(preset));
+        const taData = await Promise.all(resultPromises);
+        result[symbol] = taData;
+      }
+      return result;
+    } catch (error) {
+      console.error(error);
     }
-    return result;
   }
 
   buildBacktestShape(marketData, taMarketData) {
-    // combine marketData with taMarketData
     const result = {};
-    for (let symbol of marketData) {
-      const indicators = [];
-      result[symbol] = marketData[symbol].map((bar, index) => {
+    for (let symbol in marketData) {
+      const formatIndicators = {};
+      this.indicators.map((indicator, index) => {
+        formatIndicators[indicator] = {
+          results: taMarketData[symbol][index].result.outReal,
+          startIndex: taMarketData[symbol][index].begIndex
+        };
+      });
+      result[symbol] = marketData[symbol].map(({ open, high, low, close, volume, date, symbol }, index) => {
+        const resultIndicators = {};
+        for (let indicator in formatIndicators) {
+          if (index >= (formatIndicators[indicator].startIndex - 1)) {
+            resultIndicators[indicator] = formatIndicators[indicator].results;
+          }
+        }
         return {
           open,
           high,
           low,
           close,
+          volume,
           date,
           symbol,
-          indicators: indicators
+          indicators: resultIndicators
         };
       });
     }
