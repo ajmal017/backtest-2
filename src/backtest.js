@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const talib = require('talib');
 
 const DATA_FILE = `${__dirname}/../data/historical-data.json`;
 
@@ -49,13 +50,31 @@ class Backtest {
       // adjust historical data (baseMarketData)
       const adjMarketData = this.adjustHistoricalData(baseMarketData);
       // build talib market data inputs (special shape)
+      const taMarketData = await this.buildTaIndicators(adjMarketData);
+      console.log(taMarketData);
       // build backtesting shape
-    } catch(err) {
+    } catch (err) {
       console.error(err);
     }
   }
 
-  generatePresets (taInputs) {
+  async buildTaIndicators(data) {
+    try {
+      const result = {};
+      for (let symbol in data) {
+        const taInputs = await this.formatTaInputs(data[symbol]);
+        const presets = this.generatePresets(taInputs);
+        const resultPromises = presets.map(preset => this.talibExecute(preset));
+        const taData = await Promise.all(resultPromises);
+        result[symbol] = taData;
+      }
+      return result;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  generatePresets(taInputs) {
     return this.indicators.map(indicator => {
       const def = talib.explain(indicator);
       const returnObj = {
@@ -76,23 +95,21 @@ class Backtest {
   }
 
   formatTaInputs(data) {
-    Object.keys(data).map(symbol => {
-      const result = {
-        open: [],
-        high: [],
-        low: [],
-        close: [],
-        volume: []
-      };
-      for (let bar of data[symbol]) {
-        result.open.push(bar.open);
-        result.high.push(bar.high);
-        result.low.push(bar.low);
-        result.close.push(bar.close);
-        result.volume.push(bar.volume);
-      }
-      return result;
-    });
+    const result = {
+      open: [],
+      high: [],
+      low: [],
+      close: [],
+      volume: []
+    };
+    for (let bar of data) {
+      result.open.push(bar.open);
+      result.high.push(bar.high);
+      result.low.push(bar.low);
+      result.close.push(bar.close);
+      result.volume.push(bar.volume);
+    }
+    return result;
   }
 
   talibExecute(preset) {
@@ -108,8 +125,9 @@ class Backtest {
   }
 
   adjustHistoricalData(data) {
-    return Object.keys(data).map(symbol => {
-      return data[symbol].map(bar => {
+    const result = {};
+    for (let symbol in data) {
+      result[symbol] = data[symbol].map(bar => {
         const adjRatio = bar.adjClose / bar.close;
         return {
           open: (bar.open * adjRatio).toFixed(2),
@@ -120,8 +138,9 @@ class Backtest {
           date: bar.date,
           symbol: bar.symbol
         };
-      })
-    });
+      });
+    }
+    return result;
   }
 
   getMarketData() {
