@@ -46,15 +46,25 @@ class Backtest {
 
   async main() {
     try {
+      const marketData = await this.buildMarketData();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async buildMarketData() {
+    try {
       const baseMarketData = await this.getMarketData();
       // adjust historical data (baseMarketData)
       const adjMarketData = this.adjustHistoricalData(baseMarketData);
       // build talib market data inputs (special shape)
       const taMarketData = await this.buildTaIndicators(adjMarketData);
-      console.log(taMarketData);
+      // console.log(taMarketData['AAPL']);
       // build backtesting shape
-    } catch (err) {
-      console.error(err);
+      const backtestData = this.buildBacktestShape(adjMarketData, taMarketData);
+      console.log(backtestData.AAPL);
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -69,9 +79,25 @@ class Backtest {
         result[symbol] = taData;
       }
       return result;
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     }
+  }
+
+  buildBacktestShape(marketData, taMarketData) {
+    const result = {};
+    for (let symbol in marketData) {
+      result[symbol] = marketData[symbol].map((bar, index) => {
+        bar.indicators = {};
+        taMarketData[symbol].map((indicator, taIndex) => {
+          if (indicator.begIndex <= index) {
+            bar.indicators[this.indicators[taIndex]] = indicator.result.outReal[index];
+          }
+        });
+        return bar;
+      });
+    }
+    return result;
   }
 
   generatePresets(taInputs) {
