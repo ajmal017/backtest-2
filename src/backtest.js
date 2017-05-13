@@ -62,7 +62,7 @@ class Backtest {
       // console.log(taMarketData['AAPL']);
       // build backtesting shape
       const backtestData = this.buildBacktestShape(adjMarketData, taMarketData);
-      console.log(JSON.stringify(backtestData.AAPL));
+      console.log(backtestData.AAPL);
     } catch (error) {
       console.error(error);
     }
@@ -87,30 +87,14 @@ class Backtest {
   buildBacktestShape(marketData, taMarketData) {
     const result = {};
     for (let symbol in marketData) {
-      const formatIndicators = {};
-      this.indicators.map((indicator, index) => {
-        formatIndicators[indicator] = {
-          results: taMarketData[symbol][index].result.outReal,
-          startIndex: taMarketData[symbol][index].begIndex
-        };
-      });
-      result[symbol] = marketData[symbol].map(({ open, high, low, close, volume, date, symbol }, index) => {
-        const resultIndicators = {};
-        for (let indicator in formatIndicators) {
-          if (index >= (formatIndicators[indicator].startIndex - 1)) {
-            resultIndicators[indicator] = formatIndicators[indicator].results;
+      result[symbol] = marketData[symbol].map((bar, index) => {
+        bar.indicators = {};
+        taMarketData[symbol].map((indicator, taIndex) => {
+          if (indicator.begIndex <= index) {
+            bar.indicators[this.indicators[taIndex]] = indicator.result.outReal[index];
           }
-        }
-        return {
-          open,
-          high,
-          low,
-          close,
-          volume,
-          date,
-          symbol,
-          indicators: resultIndicators
-        };
+        });
+        return bar;
       });
     }
     return result;
