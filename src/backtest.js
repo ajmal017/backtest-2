@@ -46,32 +46,52 @@ class Backtest {
 
   async main() {
     try {
-      const baseMarketData = await this.getMarketData();
-      // adjust historical data (baseMarketData)
-      const adjMarketData = this.adjustHistoricalData(baseMarketData);
-      // build talib market data inputs (special shape)
-      const taMarketData = await this.buildTaIndicators(adjMarketData);
-      console.log(taMarketData);
-      // build backtesting shape
-    } catch (err) {
-      console.error(err);
+      const marketData = await this.buildMarketData();
+    } catch (error) {
+      throw new BacktestException(error);
     }
   }
 
+  async buildMarketData() {
+    const baseMarketData = await this.getMarketData();
+    // adjust historical data (baseMarketData)
+    const adjMarketData = this.adjustHistoricalData(baseMarketData);
+    // build talib market data inputs (special shape)
+    const taMarketData = await this.buildTaIndicators(adjMarketData);
+    console.log(taMarketData);
+    // build backtesting shape
+  }
+
   async buildTaIndicators(data) {
-    try {
-      const result = {};
-      for (let symbol in data) {
-        const taInputs = await this.formatTaInputs(data[symbol]);
-        const presets = this.generatePresets(taInputs);
-        const resultPromises = presets.map(preset => this.talibExecute(preset));
-        const taData = await Promise.all(resultPromises);
-        result[symbol] = taData;
-      }
-      return result;
-    } catch (err) {
-      console.error(err);
+    const result = {};
+    for (let symbol in data) {
+      const taInputs = await this.formatTaInputs(data[symbol]);
+      const presets = this.generatePresets(taInputs);
+      const resultPromises = presets.map(preset => this.talibExecute(preset));
+      const taData = await Promise.all(resultPromises);
+      result[symbol] = taData;
     }
+    return result;
+  }
+
+  buildBacktestShape(marketData, taMarketData) {
+    // combine marketData with taMarketData
+    const result = {};
+    for (let symbol of marketData) {
+      const indicators = [];
+      result[symbol] = marketData[symbol].map((bar, index) => {
+        return {
+          open,
+          high,
+          low,
+          close,
+          date,
+          symbol,
+          indicators: indicators
+        };
+      });
+    }
+    return result;
   }
 
   generatePresets(taInputs) {
