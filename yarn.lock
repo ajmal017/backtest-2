@@ -214,13 +214,17 @@ moment-timezone@^0.5.10:
   dependencies:
     moment ">= 2.9.0"
 
-"moment@>= 2.9.0", moment@^2.17.1, moment@^2.18.1:
+"moment@>= 2.9.0", moment@^2.17.1:
   version "2.18.1"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.18.1.tgz#c36193dd3ce1c2eed2adb7c802dbbc77a81b1c0f"
 
 ms@0.7.3:
   version "0.7.3"
   resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.3.tgz#708155a5e44e33f5fd0fc53e81d0d40a91be1fff"
+
+nan@^2.0.9:
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.6.2.tgz#e4ff34e6c95fdfb5aecc08de6596f43605a7db45"
 
 oauth-sign@~0.8.1:
   version "0.8.2"
@@ -315,6 +319,12 @@ string@^3.3.3:
 stringstream@~0.0.4:
   version "0.0.5"
   resolved "https://registry.yarnpkg.com/stringstream/-/stringstream-0.0.5.tgz#4e484cd4de5a0bbbee18e46307710a8a81621878"
+
+talib@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/talib/-/talib-1.0.2.tgz#951e5c729f332befe75aa9b4af6d0bf23dec1fda"
+  dependencies:
+    nan "^2.0.9"
 
 tough-cookie@~2.3.0:
   version "2.3.2"
