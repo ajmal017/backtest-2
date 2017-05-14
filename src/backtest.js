@@ -41,12 +41,26 @@ class Backtest {
     this.startDate = Backtest.validateDate(startDate);
     this.endDate = Backtest.validateDate(endDate);
     Backtest.validateDateRange(this.startDate, this.endDate);
+    // this.main();
+  }
+
+  setTradingLogic(tradingLogic) {
+    this.tradingLogic = tradingLogic;
     this.main();
+  }
+
+  backtestLoop(data) {
+    for (let obj of data) {
+      this.tradingLogic(obj);
+    }
   }
 
   async main() {
     try {
       const marketData = await this.buildMarketData();
+      this.backtestLoop(marketData);
+
+      console.log('done');
     } catch (error) {
       console.error(error);
     }
@@ -63,6 +77,7 @@ class Backtest {
       const condensedData = this.condenseData(adjMarketData, taMarketData);
       // build backtest data
       const backtestData = this.buildBacktestShape(condensedData);
+      // console.log(backtestData[50]);
       return backtestData;
     } catch (error) {
       console.error(error);

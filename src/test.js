@@ -10,3 +10,7 @@ const bt = new Backtest(
   new Date('1-1-2015'),
   new Date('1-1-2016')
 );
+
+bt.setTradingLogic(obj => {
+  console.log(obj.symbols.SPY.indicators);
+});
