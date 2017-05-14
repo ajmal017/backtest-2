@@ -59,10 +59,11 @@ class Backtest {
       const adjMarketData = this.adjustHistoricalData(baseMarketData);
       // build talib market data inputs (special shape)
       const taMarketData = await this.buildTaIndicators(adjMarketData);
-      // console.log(taMarketData['AAPL']);
-      // build backtesting shape
-      const backtestData = this.buildBacktestShape(adjMarketData, taMarketData);
-      console.log(backtestData.AAPL);
+      // condense taMarketData and marketData
+      const condensedData = this.condenseData(adjMarketData, taMarketData);
+      // build backtest data
+      const backtestData = this.buildBacktestShape(condensedData);
+      return backtestData;
     } catch (error) {
       console.error(error);
     }
@@ -84,7 +85,22 @@ class Backtest {
     }
   }
 
-  buildBacktestShape(marketData, taMarketData) {
+  buildBacktestShape(data) {
+    const dates = data.SPY.map(bar => bar.date);
+    return dates.map(date => {
+      const resultData = {};
+      for (let symbol in data) {
+        const index = data[symbol].findIndex(bar => bar.date === date);
+        if (index !== -1) resultData[symbol] = data[symbol][index];
+      }
+      return {
+        date: date,
+        symbols: resultData
+      }
+    });
+  }
+
+  condenseData(marketData, taMarketData) {
     const result = {};
     for (let symbol in marketData) {
       result[symbol] = marketData[symbol].map((bar, index) => {
